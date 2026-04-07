@@ -917,35 +917,68 @@ def run_bot(token):
     application.run_polling()
 
 
-async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+def run_bot(token):
+    import threading
+    import io
+    import sys
 
-    data = query.data
-    if data.startswith("watch_"):
-        parts = data.split("_", 2)
-        if len(parts) >= 3:
-            link = parts[2]
+    if sys.platform == "win32":
+        sys.stdout = io.StringIO()
+        sys.stderr = io.StringIO()
 
-            user_id = str(update.effective_user.id)
-            track_click(link, user_id)
+    import logging
+    from telegram import (
+        Update,
+        InlineKeyboardButton,
+        InlineKeyboardMarkup,
+        ReplyKeyboardMarkup,
+        KeyboardButton,
+    )
+    from telegram.ext import (
+        Application,
+        CommandHandler,
+        MessageHandler,
+        CallbackQueryHandler,
+        ContextTypes,
+        ConversationHandler,
+        filters,
+    )
 
-            clicks_data = load_clicks()
-            link_key = link.replace("https://www.twitch.tv/", "twitch.tv/")
-            clicks_count = clicks_data.get(link_key, {}).get("total_clicks", 0)
+    ADMIN_ID = 450146311
+    STREAMERS_FILE = "streamers.json"
+    USERS_FILE = "users.json"
 
-            channel_name = get_channel_name(link).capitalize()
+    async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        query = update.callback_query
+        await query.answer()
 
-            inline_keyboard = [[InlineKeyboardButton("🔴 Перейти на канал", url=link)]]
-            inline_reply_markup = InlineKeyboardMarkup(inline_keyboard)
+        data = query.data
+        if data.startswith("watch_"):
+            parts = data.split("_", 2)
+            if len(parts) >= 3:
+                link = parts[2]
 
-            await query.edit_message_text(
-                text=f"✅ Переход засчитан!\n\n📊 Всего переходов: {clicks_count}",
-                reply_markup=inline_reply_markup,
-            )
+                user_id = str(update.effective_user.id)
+                track_click(link, user_id)
 
+                clicks_data = load_clicks()
+                link_key = link.replace("https://www.twitch.tv/", "twitch.tv/")
+                clicks_count = clicks_data.get(link_key, {}).get("total_clicks", 0)
 
-class TrayIcon:
+                channel_name = get_channel_name(link).capitalize()
+
+                inline_keyboard = [
+                    [InlineKeyboardButton("🔴 Перейти на канал", url=link)]
+                ]
+                inline_reply_markup = InlineKeyboardMarkup(inline_keyboard)
+
+                await query.edit_message_text(
+                    text=f"✅ Переход засчитан!\n\n📊 Всего переходов: {clicks_count}",
+                    reply_markup=inline_reply_markup,
+                )
+
+    logger = logging.getLogger(__name__)
+
     def __init__(self, app):
         self.app = app
         self.running = True
