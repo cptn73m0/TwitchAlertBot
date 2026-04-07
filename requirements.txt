@@ -1,0 +1,5 @@
+python-telegram-bot==20.8
+customtkinter==5.2.2
+pystray==0.19.5
+pillow==10.2.0
+pyinstaller==6.5.0

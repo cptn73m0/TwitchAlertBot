@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+config.json
+clicks.json
+bot.log
+*.log
