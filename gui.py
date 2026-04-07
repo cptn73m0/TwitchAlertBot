@@ -990,22 +990,18 @@ def run_bot(token):
 
     def _tray_loop(self):
         try:
-            from pystray import Menu, MenuItem
-            from PIL import Image
-        except ImportError:
-            self.app.after(0, self._show_tray_error)
+            from pystray import Menu, MenuItem, Icon
+            from PIL import Image, ImageDraw
+        except Exception as e:
+            self.app.after(0, lambda: self._show_tray_error(str(e)))
             return
 
-        def create_image():
-            try:
-                from PIL import Image, ImageDraw
-
-                image = Image.new("RGB", (64, 64), color="#3B8ED0")
-                draw = ImageDraw.Draw(image)
-                draw.ellipse([16, 16, 48, 48], fill="white")
-                return image
-            except:
-                return None
+        try:
+            image = Image.new("RGB", (64, 64), color="#3B8ED0")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse([16, 16, 48, 48], fill="white")
+        except Exception as e:
+            image = None
 
         def on_stop(icon, item):
             self.app.after(0, self.app.stop_bot)
@@ -1026,17 +1022,11 @@ def run_bot(token):
             MenuItem("Выход", on_exit),
         )
 
-        thread = threading.Thread(
-            target=self._run_icon, args=(create_image, menu), daemon=True
-        )
-        thread.start()
-
-    def _run_icon(self, create_image, menu):
-        from pystray import Icon
-
-        image = create_image()
-        self.icon_obj = Icon("twitch_alert", image, "Twich-Alert", menu)
-        self.icon_obj.run()
+        try:
+            self.icon_obj = Icon("twitch_alert", image, "Twich-Alert", menu)
+            self.icon_obj.run()
+        except Exception as e:
+            self.app.after(0, lambda: self._show_tray_error(str(e)))
 
     def _show_tray_error(self):
         messagebox.showwarning("Предупреждение", "pystray не установлен")
